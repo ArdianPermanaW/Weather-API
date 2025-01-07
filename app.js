@@ -1,16 +1,14 @@
 const axios = require('axios');
 require('dotenv').config();
 const redis = require('redis');
+const {command, program} = require('commander');
+
+const apiKey = process.env.API_KEY;
 
 const client = redis.createClient();
 
-client.on('connect', () => {
-  console.log('Connected to Redis');
-});
-
-client.on('error', (err) => {
-  console.error('Redis error:', err);
-});
+client.on('connect', () => console.log('Connected to Redis'));
+client.on('error', (err) => console.error('Redis error:', err));
 
 (async () => {
   try {
@@ -21,10 +19,17 @@ client.on('error', (err) => {
   }
 })();
 
-const apiKey = process.env.API_KEY;
-const apiUrl = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/indonesia?unitGroup=metric&key=${apiKey}&contentType=json`;
+program
+  .version('1.0.0')
+  .description('Weather API CLI');
 
-let isFetching = false;
+program
+  .command('fetch <nation>')
+  .description('fetch the specified nation weather data')
+  .action(async (nation) =>{
+    const apiUrl = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${nation}?unitGroup=metric&key=${apiKey}&contentType=json`;
+    fetchPosts(apiUrl)
+  });
 
 async function fetchPosts(url) {
   try {
