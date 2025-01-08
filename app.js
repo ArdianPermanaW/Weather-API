@@ -19,18 +19,6 @@ client.on('error', (err) => console.error('Redis error:', err));
   }
 })();
 
-program
-  .version('1.0.0')
-  .description('Weather API CLI');
-
-program
-  .command('fetch <nation>')
-  .description('fetch the specified nation weather data')
-  .action(async (nation) =>{
-    const apiUrl = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${nation}?unitGroup=metric&key=${apiKey}&contentType=json`;
-    fetchPosts(apiUrl)
-  });
-
 async function fetchPosts(url) {
   try {
     const cachedResponse = await client.get(url);
@@ -42,10 +30,9 @@ async function fetchPosts(url) {
     // Fetch data from API
     const response = await axios.get(url);
 
-    // Cache the response with a TTL of 60 seconds
-    await client.set(url, JSON.stringify(response.data), {
-      EX: 60,
-    });
+    // Cache the response with unlimited TTL WAAA
+    await client.set(url, JSON.stringify(response.data));
+
 
     return response.data;
   }catch(err){
@@ -54,7 +41,25 @@ async function fetchPosts(url) {
   }
 }
 
-fetchPosts(apiUrl)
-.then((data) => console.log('Data:', data))
-.catch((err) => console.log(err));
+program
+  .version('1.0.0')
+  .description('Weather API CLI');
+
+program
+  .command('fetch')
+  .description('fetch the specified nation weather data')
+  .argument('<string>', 'name of the nation')
+  .action(async (nation) =>{
+    const apiUrl = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${nation}?unitGroup=metric&key=${apiKey}&contentType=json`;
+    fetchPosts(apiUrl)
+      .then((data) => console.log('Data:', data))
+      .catch((err) => console.log(err));
+  });
+
+console.log('Parsing command-line arguments...');
+program.parse(process.argv);
+console.log('Arguments parsed.');
+
+
+
 
